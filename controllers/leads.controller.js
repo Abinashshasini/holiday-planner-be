@@ -6,13 +6,49 @@ const { ApiResponse } = require('../utils/apiResponse.js');
 
 /**
  * STEPS
- * 1. Get user details and send to frontend.
+ * 1. Get leads from db and send it to FE.
+ * 2. Filter for today's records.
+ * 3. Filter for yesterday's records
+ *
  */
 const handleGetAllLeads = asyncHandler(async (req, res) => {
-  const records = await Leads.find({});
+  const { filter } = req.query;
+  let query = {};
+
+  if (filter === 'today') {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    query = {
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    };
+  } else if (filter === 'yesterday') {
+    const startOfYesterday = new Date();
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+    startOfYesterday.setHours(0, 0, 0, 0);
+
+    const endOfYesterday = new Date();
+    endOfYesterday.setDate(endOfYesterday.getDate() - 1);
+    endOfYesterday.setHours(23, 59, 59, 999);
+
+    query = {
+      createdAt: { $gte: startOfYesterday, $lte: endOfYesterday },
+    };
+  }
+
+  const records = await Leads.find(query).sort({ createdAt: -1 });
   return res
-    .status(201)
-    .json(new ApiResponse(200, records, 'All leads Fetched success'));
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        records,
+        `${filter || 'All'} leads fetched successfully`
+      )
+    );
 });
 
 /*
