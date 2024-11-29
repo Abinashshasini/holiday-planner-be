@@ -6,9 +6,19 @@ const cookieParser = require('cookie-parser');
 /** Init express APP */
 const app = express();
 const PORT = 7777 || 3000;
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://www.holidayplanner.co',
+];
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
   })
 );
 app.use(express.json({ limit: '16kb' }));
